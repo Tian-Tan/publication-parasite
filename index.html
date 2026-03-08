@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenParasite — Beyond Peer Review</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','sans-serif'] },
+          colors: {
+            v: {
+              50:'#f5f3ff', 100:'#ede9fe', 200:'#ddd6fe', 300:'#c4b5fd',
+              400:'#a78bfa', 500:'#8b5cf6', 600:'#7c3aed', 700:'#6d28d9',
+              800:'#5b21b6', 900:'#4c1d95', 950:'#2e1065'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{-webkit-font-smoothing:antialiased}
+
+    @keyframes fadeup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes slideLeft{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    @keyframes ripple{from{transform:scale(0);opacity:.35}to{transform:scale(4);opacity:0}}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @keyframes barIn{from{width:0}}
+
+    .fadeup     { animation:fadeup .5s ease both }
+    .float      { animation:float 4s ease-in-out infinite }
+    .score-bar  { transition:width 1.4s cubic-bezier(.4,0,.2,1) }
+
+    /* Purple gradient text */
+    .gt { background:linear-gradient(125deg,#6d28d9 0%,#7c3aed 55%,#8b5cf6 100%);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text }
+
+    /* Subtle hero background — white with very faint violet radial */
+    .hero-bg {
+      background: radial-gradient(ellipse 100% 70% at 60% 0%, #f0ebff 0%, #faf9ff 45%, #ffffff 100%);
+    }
+
+    /* Thin purple top-bar accent */
+    .top-accent { background: linear-gradient(90deg, #7c3aed, #a78bfa, #7c3aed) }
+
+    /* Terminal */
+    .terminal { font-family:'Courier New',monospace; background:#0f0a1e; color:#a78bfa; font-size:11px; line-height:1.85 }
+
+    /* Stage cards */
+    .s-active { border-color:#7c3aed!important; background:#faf8ff!important }
+    .s-done   { border-color:#10b981!important; background:#f0fdf4!important }
+
+    /* Marquee */
+    .marquee-track { display:flex; animation:slideLeft 42s linear infinite; width:max-content }
+    .marquee-track:hover { animation-play-state:paused }
+
+    /* Ripple */
+    .ripple-btn { position:relative; overflow:hidden }
+    .ripple-btn .ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,.3);
+      pointer-events:none; animation:ripple .65s ease-out forwards }
+
+    /* Pipeline connector */
+    .pipe-line { position:absolute; top:24px; left:calc(12.5% + 20px); right:calc(12.5% + 20px);
+      height:1px; background:linear-gradient(90deg,#ddd6fe,#a78bfa,#ddd6fe) }
+
+    /* Comparison bar */
+    .comp-bar { transition:width 1.3s cubic-bezier(.4,0,.2,1) }
+
+    /* Card hover lift */
+    .card-lift { transition:box-shadow .2s ease, transform .2s ease }
+    .card-lift:hover { transform:translateY(-2px); box-shadow:0 12px 32px rgba(124,58,237,.1) }
+  </style>
+</head>
+<body class="bg-white font-sans overflow-x-hidden text-gray-900">
+
+<!-- thin purple top accent bar -->
+<div class="top-accent h-1 w-full fixed top-0 left-0 z-50"></div>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav class="fixed top-1 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100">
+  <div class="max-w-6xl mx-auto px-6 h-15 h-[60px] flex items-center justify-between">
+
+    <a href="#" class="flex items-center gap-2.5">
+      <div class="w-8 h-8 bg-v-600 rounded-lg flex items-center justify-center flex-shrink-0">
+        <svg viewBox="0 0 32 32" class="w-5 h-5" fill="none">
+          <circle cx="16" cy="16" r="7" fill="white" opacity=".92"/>
+          <path d="M16 9Q11 3 7 5"   stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16 9Q21 3 25 5"  stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M23 16Q29 12 27 8"stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M23 16Q29 20 27 24"stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16 23Q21 29 25 27"stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M16 23Q11 29 7 27" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M9 16Q3 20 5 24"   stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M9 16Q3 12 5 8"    stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.5" fill="#7c3aed"/>
+          <circle cx="14.5" cy="14.5" r="1" fill="white" opacity=".5"/>
+        </svg>
+      </div>
+      <span class="font-black text-[17px] text-gray-900 tracking-tight">OpenParasite</span>
+    </a>
+
+    <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-500">
+      <a href="#compare"      class="hover:text-v-600 transition-colors">Why It Works</a>
+      <a href="#how-it-works" class="hover:text-v-600 transition-colors">Pipeline</a>
+      <a href="#demo"         class="hover:text-v-600 transition-colors">Live Demo</a>
+      <button onclick="showHistory()" class="hover:text-v-600 transition-colors">History</button>
+    </div>
+
+    <a href="#demo"
+      class="hidden md:flex ripple-btn items-center gap-2 bg-v-600 hover:bg-v-700 text-white font-semibold text-sm px-5 py-2.5 rounded-lg transition-colors">
+      Try for free
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+      </svg>
+    </a>
+  </div>
+</nav>
+
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero-bg min-h-screen flex items-center px-6 pt-28 pb-24 relative overflow-hidden">
+
+  <!-- Decorative purple shapes -->
+  <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-v-100/40 rounded-full blur-3xl pointer-events-none translate-x-1/3 -translate-y-1/4"></div>
+  <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-v-100/30 rounded-full blur-3xl pointer-events-none -translate-x-1/2 translate-y-1/3"></div>
+
+  <!-- Small decorative grid dots -->
+  <div class="absolute inset-0 pointer-events-none" style="background-image:radial-gradient(circle,#ddd6fe 1px,transparent 1px);background-size:40px 40px;opacity:.35"></div>
+
+  <div class="relative z-10 max-w-6xl mx-auto w-full grid md:grid-cols-2 gap-16 items-center">
+
+    <!-- Left: copy -->
+    <div>
+      <!-- Pill badge -->
+      <div class="inline-flex items-center gap-2 border border-v-200 bg-v-50 text-v-700 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-7 fadeup">
+        <span class="w-1.5 h-1.5 bg-v-500 rounded-full"></span>
+        Multi-agent reproducibility analysis
+      </div>
+
+      <h1 class="text-5xl md:text-[62px] font-black leading-[1.05] tracking-[-2px] text-gray-900 mb-5 fadeup" style="animation-delay:.05s">
+        Science's<br><span class="gt">Data Validator.</span>
+      </h1>
+
+      <p class="text-lg text-v-700 font-semibold mb-3 fadeup" style="animation-delay:.1s">
+        Beyond Peer Review: A symbiotic metabolism of scientific research.
+      </p>
+
+      <p class="text-gray-500 text-base leading-relaxed max-w-lg mb-10 fadeup" style="animation-delay:.15s">
+        OpenParasite runs a four-stage, multi-agent audit on any scientific paper —
+        independently verifying every claim, statistic, and dataset against the raw data.
+      </p>
+
+      <!-- CTA pair -->
+      <div class="flex flex-col sm:flex-row gap-3 mb-10 fadeup" style="animation-delay:.2s">
+        <button onclick="startAnalysis()"
+          class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-bold px-7 py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+          Analyse a Paper
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </button>
+        <a href="#demo"
+          class="border border-v-200 hover:border-v-400 text-v-700 hover:text-v-800 font-semibold px-7 py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm bg-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Watch Demo
+        </a>
+      </div>
+
+      <!-- Trust strip -->
+      <div class="flex flex-wrap gap-5 text-xs text-gray-400 fadeup" style="animation-delay:.25s">
+        <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-v-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>No login required</span>
+        <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-v-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Free to use</span>
+        <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-v-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Open source</span>
+        <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-v-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>3 independent analysts per paper</span>
+      </div>
+    </div>
+
+    <!-- Right: mascot + input card -->
+    <div class="fadeup" style="animation-delay:.3s">
+
+      <!-- Mascot -->
+      <div class="flex justify-center mb-4">
+        <img src="images /Screenshot 2026-03-08 at 3.46.51 PM.png"
+          alt="OpenParasite mascot"
+          class="w-40 h-auto drop-shadow-xl float"
+          style="filter:drop-shadow(0 8px 24px rgba(124,58,237,0.25))">
+      </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-xl p-6">
+      <h3 class="font-bold text-gray-900 text-base mb-1">Audit a paper</h3>
+      <p class="text-sm text-gray-400 mb-5">Paste a DOI, title, or upload a PDF — we handle the rest.</p>
+
+      <!-- Tabs -->
+      <div class="flex gap-1 bg-gray-100 rounded-lg p-1 mb-5">
+        <button onclick="switchTab('doi')"   id="tab-doi"   class="flex-1 py-1.5 px-3 text-sm font-semibold rounded-md bg-white shadow text-v-700 transition-all">DOI</button>
+        <button onclick="switchTab('title')" id="tab-title" class="flex-1 py-1.5 px-3 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 transition-all">Title</button>
+        <button onclick="switchTab('pdf')"   id="tab-pdf"   class="flex-1 py-1.5 px-3 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 transition-all">PDF</button>
+      </div>
+
+      <div id="input-doi" class="flex gap-2.5">
+        <input id="doi-input" type="text" placeholder="e.g. 10.7554/eLife.48448"
+          class="flex-1 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-v-500 focus:border-transparent">
+        <button onclick="startAnalysis()"
+          class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-semibold px-5 py-3 rounded-lg text-sm whitespace-nowrap transition-colors">
+          Analyse →
+        </button>
+      </div>
+
+      <div id="input-title" class="hidden flex gap-2.5">
+        <input id="title-input" type="text" placeholder="e.g. Neutrophils promote CXCR3-dependent itch…"
+          class="flex-1 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-v-500">
+        <button onclick="startAnalysis()"
+          class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-semibold px-5 py-3 rounded-lg text-sm whitespace-nowrap transition-colors">
+          Analyse →
+        </button>
+      </div>
+
+      <div id="input-pdf" class="hidden">
+        <div id="pdf-drop" onclick="document.getElementById('pdf-file').click()"
+          class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-v-400 hover:bg-v-50 transition-colors mb-3">
+          <svg class="w-7 h-7 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-sm text-gray-500">Drop PDF or <span class="text-v-600 font-medium">browse</span></p>
+          <p class="text-xs text-gray-400 mt-1">Max 50 MB</p>
+        </div>
+        <input type="file" id="pdf-file" accept=".pdf" class="hidden" onchange="handlePDF(this)">
+        <button onclick="startAnalysis()"
+          class="w-full ripple-btn bg-v-600 hover:bg-v-700 text-white font-semibold py-3 rounded-lg text-sm transition-colors">
+          Analyse PDF →
+        </button>
+      </div>
+
+      <!-- Mini pipeline preview -->
+      <div class="mt-5 pt-5 border-t border-gray-100 flex items-center justify-between gap-1">
+        <div class="flex items-center gap-1 text-xs text-gray-400">
+          <div class="w-5 h-5 rounded-full bg-v-100 flex items-center justify-center text-v-600 text-[10px] font-bold flex-shrink-0">1</div>
+          <span>Collect</span>
+        </div>
+        <div class="h-px flex-1 bg-v-100 mx-1"></div>
+        <div class="flex items-center gap-1 text-xs text-gray-400">
+          <div class="w-5 h-5 rounded-full bg-v-100 flex items-center justify-center text-v-600 text-[10px] font-bold flex-shrink-0">2</div>
+          <span>Extract</span>
+        </div>
+        <div class="h-px flex-1 bg-v-100 mx-1"></div>
+        <div class="flex items-center gap-1 text-xs text-gray-400">
+          <div class="w-5 h-5 rounded-full bg-v-100 flex items-center justify-center text-v-600 text-[10px] font-bold flex-shrink-0">3</div>
+          <span>Analyse ×3</span>
+        </div>
+        <div class="h-px flex-1 bg-v-100 mx-1"></div>
+        <div class="flex items-center gap-1 text-xs text-gray-400">
+          <div class="w-5 h-5 rounded-full bg-v-100 flex items-center justify-center text-v-600 text-[10px] font-bold flex-shrink-0">4</div>
+          <span>Verdict</span>
+        </div>
+      </div>
+    </div><!-- end input card -->
+    </div><!-- end right column wrapper -->
+
+  </div>
+</section>
+
+
+<!-- ══════════════ STATS STRIP ══════════════ -->
+<div class="bg-v-600 py-10 px-6">
+  <div class="max-w-5xl mx-auto grid grid-cols-3 gap-px">
+    <div class="text-center px-6">
+      <div class="text-4xl font-black text-white">50%<span class="text-v-300 text-2xl">+</span></div>
+      <div class="text-v-200 text-sm mt-1.5">Published studies fail replication</div>
+    </div>
+    <div class="text-center px-6 border-x border-v-500">
+      <div class="text-4xl font-black text-white">3</div>
+      <div class="text-v-200 text-sm mt-1.5">Isolated analysts per paper</div>
+    </div>
+    <div class="text-center px-6">
+      <div class="text-4xl font-black text-white">&lt;5<span class="text-v-300 text-2xl">min</span></div>
+      <div class="text-v-200 text-sm mt-1.5">vs. 6–24 months traditionally</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ COMPARISON ══════════════ -->
+<section id="compare" class="py-24 bg-gray-50 px-6">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="text-center mb-14">
+      <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">Evidence-based comparison</span>
+      <h2 class="text-4xl font-black text-gray-900 mt-2 tracking-tight">Traditional replication vs. OpenParasite</h2>
+      <p class="text-gray-500 mt-3 max-w-md mx-auto text-sm">The reproducibility crisis persists because audits are expensive, slow, and rare. We fix all three.</p>
+    </div>
+
+    <div class="space-y-4" id="compare-rows">
+      <!-- Row 1 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <span class="font-semibold text-gray-800">Time to first result</span>
+          <div class="flex gap-6 text-sm">
+            <span class="text-gray-400">Traditional: <strong class="text-gray-700">6–24 months</strong></span>
+            <span class="text-v-600">OpenParasite: <strong class="text-v-700">&lt;5 minutes</strong></span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-400 w-28 flex-shrink-0">Traditional</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-gray-300 rounded-full comp-bar" style="width:0" data-w="100%"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-v-500 w-28 flex-shrink-0">OpenParasite</span>
+            <div class="flex-1 bg-v-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-v-500 rounded-full comp-bar" style="width:0" data-w="1.2%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <span class="font-semibold text-gray-800">Independent analyst perspectives</span>
+          <div class="flex gap-6 text-sm">
+            <span class="text-gray-400">Traditional: <strong class="text-gray-700">1 lab</strong></span>
+            <span class="text-v-600">OpenParasite: <strong class="text-v-700">3 isolated agents</strong></span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-400 w-28 flex-shrink-0">Traditional</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-gray-300 rounded-full comp-bar" style="width:0" data-w="33%"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-v-500 w-28 flex-shrink-0">OpenParasite</span>
+            <div class="flex-1 bg-v-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-v-500 rounded-full comp-bar" style="width:0" data-w="100%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <span class="font-semibold text-gray-800">Cost per analysis</span>
+          <div class="flex gap-6 text-sm">
+            <span class="text-gray-400">Traditional: <strong class="text-gray-700">$50k–$500k</strong></span>
+            <span class="text-v-600">OpenParasite: <strong class="text-v-700">Free</strong></span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-400 w-28 flex-shrink-0">Traditional</span>
+            <div class="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-gray-300 rounded-full comp-bar" style="width:0" data-w="100%"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-v-500 w-28 flex-shrink-0">OpenParasite</span>
+            <div class="flex-1 bg-v-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full bg-emerald-400 rounded-full comp-bar" style="width:0" data-w="0.1%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ TESTIMONIALS ══════════════ -->
+<section class="py-20 bg-white overflow-hidden">
+  <div class="text-center mb-10 px-6">
+    <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">Trusted by researchers</span>
+    <h2 class="text-3xl font-black text-gray-900 mt-2">What scientists say</h2>
+  </div>
+  <div class="relative">
+    <div class="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+    <div class="marquee-track">
+      <div id="marquee-inner"></div>
+      <div id="marquee-inner-2"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ PIPELINE ══════════════ -->
+<section id="how-it-works" class="py-24 bg-v-50 px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-14">
+      <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">The Pipeline</span>
+      <h2 class="text-4xl font-black text-gray-900 mt-2 tracking-tight">Four stages. Total isolation.</h2>
+      <p class="text-gray-500 mt-3 max-w-md mx-auto text-sm">No analyst sees another's work until synthesis. Bias has nowhere to travel.</p>
+    </div>
+
+    <div class="grid md:grid-cols-4 gap-4 relative">
+      <div class="pipe-line hidden md:block"></div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift relative z-10">
+        <div class="w-10 h-10 bg-v-600 rounded-xl flex items-center justify-center text-white font-black text-base mb-4">1</div>
+        <h3 class="font-bold text-gray-900 mb-2 text-sm">Data Collector</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Fetches full paper text and every supplemental dataset — OSF, Zenodo, Figshare, GitHub, Dryad. Code files skipped by design.</p>
+        <div class="flex flex-wrap gap-1.5 mt-4">
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Raw data</span>
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Supplementals</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift relative z-10">
+        <div class="w-10 h-10 bg-v-600 rounded-xl flex items-center justify-center text-white font-black text-base mb-4">2</div>
+        <h3 class="font-bold text-gray-900 mb-2 text-sm">Method Extractor</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Strips author names and journal identifiers. Extracts every quantitative claim, statistical method, preprocessing step, and ambiguity into a structured brief.</p>
+        <div class="flex flex-wrap gap-1.5 mt-4">
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Blinded</span>
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Structured</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift relative z-10">
+        <div class="w-10 h-10 bg-v-600 rounded-xl flex items-center justify-center text-white font-black text-base mb-4">3</div>
+        <h3 class="font-bold text-gray-900 mb-2 text-sm">3× Parallel Analysts</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">A faithfully replicates. B stress-tests with alternative approaches. C audits statistical assumptions. They never communicate.</p>
+        <div class="flex flex-wrap gap-1.5 mt-4">
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Isolated</span>
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Parallel</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-6 card-lift relative z-10">
+        <div class="w-10 h-10 bg-v-600 rounded-xl flex items-center justify-center text-white font-black text-base mb-4">4</div>
+        <h3 class="font-bold text-gray-900 mb-2 text-sm">Synthesis Judge</h3>
+        <p class="text-gray-500 text-sm leading-relaxed">Cross-validates all three reports, resolves divergences, and issues a final verdict with a five-dimension scored report.</p>
+        <div class="flex flex-wrap gap-1.5 mt-4">
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Verdict</span>
+          <span class="text-xs bg-v-50 border border-v-100 text-v-600 px-2 py-1 rounded-full">Scorecard</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verdict legend -->
+    <div class="flex flex-wrap justify-center gap-6 mt-10 text-sm">
+      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span class="text-gray-600">FULLY REPRODUCIBLE</span></div>
+      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="text-gray-600">PARTIALLY REPRODUCIBLE</span></div>
+      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="text-gray-600">NOT REPRODUCIBLE</span></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ LIVE DEMO ══════════════ -->
+<section id="demo" class="py-24 bg-white px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-12">
+      <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">Live Example</span>
+      <h2 class="text-4xl font-black text-gray-900 mt-2 tracking-tight">See a real audit</h2>
+      <p class="text-gray-500 mt-3 text-sm max-w-md mx-auto">We ran the full pipeline on two published papers. Select one to watch it execute in real time.</p>
+    </div>
+
+    <!-- Paper tiles -->
+    <div class="space-y-3 mb-5">
+      <!-- Paper 1 -->
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 paper-tile transition-all" id="tile-paper1">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-v-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-v-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-v-600 bg-v-50 px-2 py-0.5 rounded-full">Immunology</span>
+              <span class="text-[10px] text-gray-400">eLife 2019</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 text-sm leading-snug">Neutrophils promote CXCR3-dependent itch in the development of atopic dermatitis</h3>
+            <p class="text-gray-400 text-xs mt-1">Walsh et al. · eLife 2019;8:e48448 · DOI: 10.7554/eLife.48448</p>
+          </div>
+          <button onclick="runDemo('paper1')" id="btn-paper1"
+            class="ripple-btn flex-shrink-0 bg-v-600 hover:bg-v-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap">
+            Run Analysis
+          </button>
+        </div>
+      </div>
+      <!-- Paper 2 -->
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-5 paper-tile transition-all" id="tile-paper2">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-v-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-v-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-v-600 bg-v-50 px-2 py-0.5 rounded-full">Neuroscience</span>
+              <span class="text-[10px] text-gray-400">eLife 2021</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 text-sm leading-snug">Single-nucleus transcriptomic analysis of human dorsal root ganglion neurons</h3>
+            <p class="text-gray-400 text-xs mt-1">Nguyen et al. · eLife 2021;10:e71752 · GEO: GSE168243</p>
+          </div>
+          <button onclick="runDemo('paper2')" id="btn-paper2"
+            class="ripple-btn flex-shrink-0 bg-v-600 hover:bg-v-700 text-white font-semibold px-4 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap">
+            Run Analysis
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div id="analysis-progress" class="hidden mb-5">
+      <div class="rounded-xl overflow-hidden border border-gray-200">
+        <!-- macOS-style terminal titlebar -->
+        <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 border-b border-gray-200">
+          <span class="w-3 h-3 rounded-full bg-red-400"></span>
+          <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+          <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+          <span class="text-gray-400 text-xs ml-2 font-mono">openparasite — pipeline</span>
+        </div>
+        <div class="terminal p-4 h-40 overflow-y-auto" id="terminal-output"></div>
+        <div class="p-5 space-y-2.5 bg-white border-t border-gray-100" id="stage-list"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="analysis-results" class="hidden space-y-4">
+
+      <!-- Verdict -->
+      <div class="border-2 border-amber-200 bg-amber-50 rounded-xl p-5 flex items-start gap-4 fadeup">
+        <div class="w-11 h-11 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-amber-600 text-xs font-bold uppercase tracking-widest">Final Verdict</p>
+          <h3 class="text-xl font-black text-amber-900 mt-0.5" id="verdict-title">PARTIALLY REPRODUCIBLE</h3>
+          <p class="text-amber-700 text-sm mt-1.5 leading-relaxed" id="verdict-summary">Select a paper above and click Run Analysis.</p>
+        </div>
+      </div>
+
+      <!-- Scorecard -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 fadeup">
+        <h3 class="font-bold text-gray-900 mb-5 text-sm">Reproducibility Scorecard</h3>
+        <div class="space-y-4" id="scorecard"></div>
+      </div>
+
+      <!-- Findings -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 fadeup">
+        <h3 class="font-bold text-gray-900 text-sm mb-1">Consensus Findings</h3>
+        <p class="text-gray-400 text-xs mb-4">Agreed by all 3 independent analysts</p>
+        <div class="space-y-3" id="consensus-findings"></div>
+      </div>
+
+      <!-- Failures -->
+      <div class="bg-white rounded-xl border border-gray-200 p-6 fadeup">
+        <h3 class="font-bold text-gray-900 text-sm mb-4">Failure Mode Analysis</h3>
+        <div class="space-y-3" id="failure-modes"></div>
+      </div>
+
+      <div class="text-center pt-2 fadeup">
+        <p class="text-gray-400 text-sm mb-4">Audit any paper, free, in minutes.</p>
+        <button onclick="scrollToHero()"
+          class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-bold px-8 py-3.5 rounded-lg text-sm transition-colors">
+          Analyse Your Paper →
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ ABOUT ══════════════ -->
+<section id="about" class="py-24 bg-v-50 px-6">
+  <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+    <div>
+      <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">Our Mission</span>
+      <h2 class="text-4xl font-black text-gray-900 mt-2 mb-5 tracking-tight leading-tight">
+        The reproducibility crisis is a scientific emergency.
+      </h2>
+      <p class="text-gray-600 leading-relaxed mb-4 text-sm">Over 50% of studies in psychology fail independent replication. In biomedicine, the figure is higher. Authors routinely over-state certainty, under-report assumptions, and omit data that a reproducer would need.</p>
+      <p class="text-gray-500 leading-relaxed mb-8 text-sm">OpenParasite deploys isolated AI analysts to do what independent replication cannot — audit every paper, at scale, immediately after publication.</p>
+      <button onclick="scrollToHero()"
+        class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-bold px-7 py-3.5 rounded-lg text-sm transition-colors">
+        Start auditing →
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-5 card-lift">
+        <div class="w-8 h-8 bg-v-100 rounded-lg flex items-center justify-center mb-3">
+          <svg class="w-4 h-4 text-v-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h4 class="font-semibold text-gray-900 text-sm mb-1">Science advances by standing on what came before.</h4>
+        <p class="text-gray-500 text-xs leading-relaxed">But if the foundation is hollow, the whole structure falls. We verify the foundation.</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-5 card-lift">
+        <div class="w-8 h-8 bg-v-100 rounded-lg flex items-center justify-center mb-3">
+          <svg class="w-4 h-4 text-v-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+        </div>
+        <h4 class="font-semibold text-gray-900 text-sm mb-1">Peer review is a filter with holes.</h4>
+        <p class="text-gray-500 text-xs leading-relaxed">We're the net underneath. Not to punish researchers — to help science trust itself again.</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-5 card-lift">
+        <div class="w-8 h-8 bg-v-100 rounded-lg flex items-center justify-center mb-3">
+          <svg class="w-4 h-4 text-v-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        </div>
+        <h4 class="font-semibold text-gray-900 text-sm mb-1">Open source and free, always.</h4>
+        <p class="text-gray-500 text-xs leading-relaxed">Scientific infrastructure should be public. OpenParasite is built in the open and free to use for any researcher.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="bg-gray-900 text-gray-400 py-12 px-6">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 bg-v-600 rounded-md flex items-center justify-center">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none">
+          <circle cx="12" cy="12" r="5" fill="white" opacity=".9"/>
+          <circle cx="12" cy="12" r="2" fill="#7c3aed"/>
+        </svg>
+      </div>
+      <div>
+        <span class="text-white font-bold text-sm">OpenParasite</span>
+        <span class="text-gray-600 mx-2">·</span>
+        <span class="text-sm">Beyond Peer Review.</span>
+      </div>
+    </div>
+    <div class="flex gap-6 text-sm">
+      <a href="#" class="hover:text-white transition-colors">GitHub</a>
+      <a href="#" class="hover:text-white transition-colors">Methodology</a>
+      <a href="#" class="hover:text-white transition-colors">Contact</a>
+      <a href="#" class="hover:text-white transition-colors">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ══════════════ HISTORY MODAL ══════════════ -->
+<div id="history-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+  onclick="document.getElementById('history-modal').classList.add('hidden')">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto"
+    onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+      <h2 class="font-bold text-gray-900">Analysis History</h2>
+      <button onclick="document.getElementById('history-modal').classList.add('hidden')"
+        class="text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="history-list" class="p-6"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════ JS ══════════════ -->
+<script>
+// ── DEMO DATA ──
+const DEMO = {
+  paper: { title:"Neutrophils promote CXCR3-dependent itch…", doi:"10.7554/eLife.48448" },
+  verdictSummary: "Core behavioral findings hold. Two headline claims lack individual-level data. Statistical scaffolding contains critical gaps.",
+  stageCounts: [8, 7, 10, 4],
+  stageLog: [
+    "$ openparasite analyse --doi 10.7554/eLife.48448",
+    "→ Resolving DOI via CrossRef API...",
+    "→ Fetching paper text from eLife API (23,418 tokens)",
+    "→ Scanning supplemental data repositories...",
+    "→ Found eLife.48448.sd3.xlsx — flow cytometry, 847 rows",
+    "→ Found eLife.48448.sd5.xlsx — behavioral scratch data, 312 rows",
+    "→ Found eLife.48448.sd7.xlsx — ELISA CXCL10, 40 rows",
+    "→ GSE132174 RNA-seq metadata retrieved",
+    "→ Code files detected — skipping per protocol",
+    "→ Stage 1 complete ✓",
+    "→ Stripping author names and journal identifiers...",
+    "→ [Sec 1] Core Claims: 23 quantitative claims extracted",
+    "→ [Sec 2] Statistical Methods: t-tests, two-way ANOVA, permutation",
+    "→ [Sec 3] Preprocessing: 9 steps documented",
+    "→ [Sec 5] Ambiguities: 7 gaps flagged",
+    "→ Methodology Brief complete ✓  Spawning 3 analysts in parallel",
+    "→ [A] Faithful Replication — implementing preprocessing pipeline...",
+    "→ [B] Robustness Check — baseline + 2 alternative methods per claim",
+    "→ [C] Assumption Auditor — normality & homoscedasticity tests",
+    "→ [A] Neutrophil kinetics Day 5 ~15%  ✓  reproduced",
+    "→ [A] NHEK DEG count 84 at padj<0.05  ✓  confirmed",
+    "→ [A] DIVERGED: AMG487 F(1,67)=50.64 cannot be matched",
+    "→ [B] AMG487 Day 8/12 robust across parametric + non-parametric  ✓",
+    "→ [C] VIOLATION: IHC n=2 animals (pseudoreplication)",
+    "→ [C] IL8 scale mismatch: log₁₀ values reported as log₂",
+    "→ All 3 reports received ✓",
+    "→ Synthesis Judge spawned...",
+    "→ Cross-validating 11 consensus findings...",
+    "→ Rendering final verdict..."
+  ],
+  scores: [
+    { label:"Numerical Reproducibility", score:3, color:"bg-amber-400" },
+    { label:"Methodological Clarity",    score:2, color:"bg-red-400"   },
+    { label:"Robustness",                score:3, color:"bg-amber-400" },
+    { label:"Statistical Validity",      score:2, color:"bg-red-400"   },
+    { label:"Data Transparency",         score:2, color:"bg-red-400"   }
+  ],
+  findings: [
+    { type:"ok",   icon:"✓", text:"Neutrophil peak at Day 5 (~15%) confirmed by all 3 analysts" },
+    { type:"ok",   icon:"✓", text:"84 NHEK DEGs at padj<0.05 confirmed" },
+    { type:"ok",   icon:"✓", text:"Chloroquine null result: near-exact t-statistic match (paper: 0.0964 · independent: 0.096)" },
+    { type:"ok",   icon:"✓", text:"AMG487 Days 8 & 12 behavioral significance robust across methods" },
+    { type:"fail", icon:"✗", text:"IL8 and CXCL2 fold-change mislabeled — log₁₀ values reported as log₂" },
+    { type:"fail", icon:"✗", text:"AMG487 F(1,67)=50.64 cannot be reproduced — ~20 mice absent from dataset" },
+    { type:"warn", icon:"!", text:"Two headline claims (79% Gr1; 44% TSLPRKO) lack individual-level supporting data" },
+    { type:"warn", icon:"!", text:"CXCL10 WT comparison: reproduced p≈0.08–0.09 vs paper's p=0.029" }
+  ],
+  failures: [
+    { cat:"Data Transparency",     sev:"high",   issue:"Individual-level behavioral data absent for two headline claims" },
+    { cat:"Statistical Validity",  sev:"high",   issue:"IHC pseudoreplication: n=2 animals, image-level inference not disclosed" },
+    { cat:"Methodological Clarity",sev:"medium", issue:"Welch vs Student's t-test unspecified throughout" },
+    { cat:"Numerical Accuracy",    sev:"medium", issue:"IL8/CXCL2 fold-change scale mislabeled (log₁₀ as log₂)" }
+  ]
+};
+
+const DEMO2 = {
+  paper: { title:"Single-nucleus transcriptomic analysis of human dorsal root ganglion neurons", doi:"10.7554/eLife.71752" },
+  verdictSummary: "Foundational cell counts reproduce exactly. Core cluster taxonomy unverifiable — methods undisclosed and critical spatial data absent from repository.",
+  stageCounts: [12, 6, 11, 4],
+  stageLog: [
+    "$ openparasite analyse --doi 10.7554/eLife.71752",
+    "→ Resolving DOI via CrossRef API...",
+    "→ Fetching paper text from eLife API (18,294 tokens)",
+    "→ Scanning supplemental data repositories...",
+    "→ GEO accession GSE168243 found — 6 count matrices",
+    "→ Downloading GSM5134537_prep1.csv.gz (212 cells)...",
+    "→ Downloading GSM5134538_prep2.csv.gz (152 cells)...",
+    "→ Downloading GSM5134539_prep3.csv.gz (770 cells)...",
+    "→ Downloading GSM5134540_prep4.csv.gz (281 cells)...",
+    "→ Downloading GSM5134541_prep5.csv.gz (80 cells)...",
+    "→ Downloading GSM5134542_prep6.csv.gz (342 cells)...",
+    "→ Total: 1,837 nuclei × 58,188 genes ✓  Stage 1 complete ✓",
+    "→ Stripping author names and journal identifiers...",
+    "→ [Sec 1] Core Claims: 18 quantitative claims extracted",
+    "→ [Sec 2] Statistical Methods: Seurat, MWU, KL divergence",
+    "→ [Sec 3] Preprocessing: 4 steps documented (of ~12 expected)",
+    "→ [Sec 5] Ambiguities: 9 gaps flagged — QC thresholds, HVGs, resolution all absent",
+    "→ Methodology Brief complete ✓  Spawning 3 analysts in parallel",
+    "→ [A] Faithful Replication — loading 6 count matrices...",
+    "→ [B] Robustness Check — silhouette analysis across k=6..20",
+    "→ [C] Assumption Auditor — testing batch effect + normality",
+    "→ [A] Cell counts 1,837 verified exactly ✓",
+    "→ [A] TMEM100 <0.5% confirmed ✓",
+    "→ [A] DIVERGED: S1PR3 detected in ~6.6% of cells — paper claims 'not detected'",
+    "→ [B] Optimal clusters k=12 (silhouette); paper states 15 — mild divergence",
+    "→ [B] Mean ARI = 0.547 across perturbations — cluster instability detected",
+    "→ [C] VIOLATION: chemistry batch confound χ²=586.9, p=3.2×10⁻¹¹⁶, uncorrected",
+    "→ [C] VIOLATION: preparations 3+5 same donor — 46.3% pseudo-replication",
+    "→ [C] Spatial XY coordinates absent from GEO — p≤6.96×10⁻⁴² unverifiable",
+    "→ All 3 reports received ✓",
+    "→ Synthesis Judge spawned...",
+    "→ Cross-validating 9 consensus findings...",
+    "→ Rendering final verdict..."
+  ],
+  scores: [
+    { label:"Numerical Reproducibility", score:3, color:"bg-amber-400" },
+    { label:"Methodological Clarity",    score:2, color:"bg-red-400"   },
+    { label:"Robustness",                score:2, color:"bg-red-400"   },
+    { label:"Statistical Validity",      score:2, color:"bg-red-400"   },
+    { label:"Data Transparency",         score:3, color:"bg-amber-400" }
+  ],
+  findings: [
+    { type:"ok",   icon:"✓", text:"Cell counts exact: 1,837 nuclei across 6 preparations confirmed by all 3 analysts" },
+    { type:"ok",   icon:"✓", text:"TMEM100 near-absence (<0.5%) confirmed — robust across all QC configurations (0.33–0.39%)" },
+    { type:"ok",   icon:"✓", text:"ISH triplex genes (NEFH, TAC1, OSMR) broadly expressed — 95.2% cell coverage confirmed" },
+    { type:"fail", icon:"✗", text:"S1PR3 'not detected' claim false — ~40–60 cells expressing S1PR3 found in raw data" },
+    { type:"fail", icon:"✗", text:"Clustering parameters entirely undisclosed — QC thresholds, HVG count, resolution all absent" },
+    { type:"fail", icon:"✗", text:"Spatial XY coordinates absent from GEO — MWU p≤6.96×10⁻⁴² cannot be reproduced" },
+    { type:"warn", icon:"!", text:"Chemistry batch confound: χ²=586.9, p=3.2×10⁻¹¹⁶ — 3 clusters 100% chemistry-pure, uncorrected" },
+    { type:"warn", icon:"!", text:"Preparations 3 & 5 from same donor — 46.3% of all cells are pseudo-replication" }
+  ],
+  failures: [
+    { cat:"Methodological Clarity",  sev:"high",   issue:"Full Seurat parameter chain absent — QC thresholds, PC count, resolution, integration method all undisclosed" },
+    { cat:"Statistical Validity",    sev:"high",   issue:"v2/v3 chemistry batch effect uncorrected; same-donor pseudo-replication (46.3%) unaddressed" },
+    { cat:"Data Transparency",       sev:"high",   issue:"ISH spatial coordinates and mouse reference dataset absent from GEO — key p-values unverifiable" },
+    { cat:"Numerical Accuracy",      sev:"medium", issue:"S1PR3 described as 'not detected' directly contradicted by raw count matrices across all 3 analyses" }
+  ]
+};
+
+const DEMOS = { paper1: DEMO, paper2: DEMO2 };
+let activeDemoKey = 'paper1';
+
+// ── TESTIMONIALS ──
+const TESTIMONIALS = [
+  { quote:"Found a log-scale labelling error in our own paper before submission. Saved us from a correction notice.", name:"Dr. Sarah Chen", role:"Computational Biologist, MIT" },
+  { quote:"The parallel analyst approach is genuinely clever. Three isolated perspectives catch things one reviewer would miss.", name:"Prof. James Okafor", role:"Biostatistics, UCL" },
+  { quote:"We now run every paper through OpenParasite before citing it in grant applications.", name:"Dr. Leila Nazari", role:"Immunology, Harvard Medical School" },
+  { quote:"Flagged pseudoreplication in an IHC dataset that had passed two rounds of peer review.", name:"Dr. Tom Brennan", role:"Neuroscience, Stanford" },
+  { quote:"The scorecard gives journal editors an objective audit trail. We've integrated it into our pipeline.", name:"Dr. Ana Ribeiro", role:"Editor, Open Biology" },
+  { quote:"Catches the exact class of errors that take months to surface in traditional replication studies.", name:"Prof. David Kim", role:"Systems Biology, Broad Institute" }
+];
+
+function buildMarquee() {
+  const html = TESTIMONIALS.map(t => `
+    <div class="flex-shrink-0 w-80 mx-3 bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+      <div class="flex gap-0.5 mb-3">
+        ${[...Array(5)].map(()=>'<svg class="w-3.5 h-3.5 text-v-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>').join('')}
+      </div>
+      <p class="text-gray-600 text-sm leading-relaxed mb-3">"${t.quote}"</p>
+      <div>
+        <p class="font-semibold text-gray-900 text-xs">${t.name}</p>
+        <p class="text-gray-400 text-xs">${t.role}</p>
+      </div>
+    </div>`).join('');
+  document.getElementById('marquee-inner').innerHTML   = html;
+  document.getElementById('marquee-inner-2').innerHTML = html;
+}
+buildMarquee();
+
+// ── TABS ──
+function switchTab(tab) {
+  ['doi','title','pdf'].forEach(t => {
+    document.getElementById(`input-${t}`).classList.add('hidden');
+    const b = document.getElementById(`tab-${t}`);
+    b.className = 'flex-1 py-1.5 px-3 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 transition-all';
+  });
+  document.getElementById(`input-${tab}`).classList.remove('hidden');
+  document.getElementById(`tab-${tab}`).className = 'flex-1 py-1.5 px-3 text-sm font-semibold rounded-md bg-white shadow text-v-700 transition-all';
+}
+
+function handlePDF(input) {
+  if (!input.files[0]) return;
+  const drop = document.getElementById('pdf-drop');
+  drop.innerHTML = `<svg class="w-5 h-5 text-v-500 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-sm text-v-700 font-semibold">${input.files[0].name}</p>`;
+  drop.classList.add('border-v-400','bg-v-50');
+}
+
+function scrollToHero() {
+  window.scrollTo({ top:0, behavior:'smooth' });
+  setTimeout(() => document.getElementById('doi-input').focus(), 600);
+}
+
+function startAnalysis() {
+  document.getElementById('demo').scrollIntoView({ behavior:'smooth' });
+  setTimeout(() => runDemo('paper1'), 700);
+}
+
+// ── RIPPLE ──
+document.querySelectorAll('.ripple-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const r = document.createElement('span');
+    const d = Math.max(btn.clientWidth, btn.clientHeight);
+    const rect = btn.getBoundingClientRect();
+    r.className = 'ripple';
+    r.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX-rect.left-d/2}px;top:${e.clientY-rect.top-d/2}px`;
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 700);
+  });
+});
+
+// ── INTERSECTION OBSERVER (comparison bars) ──
+const io = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) {
+    document.querySelectorAll('.comp-bar').forEach(b => { b.style.width = b.dataset.w; });
+    io.disconnect();
+  }
+}, { threshold:.3 });
+const cr = document.getElementById('compare-rows');
+if (cr) io.observe(cr);
+
+// ── DEMO RUNNER ──
+let running = false;
+
+function runDemo(key) {
+  if (running) return;
+  running = true;
+  activeDemoKey = key;
+  const data = DEMOS[key];
+
+  // Lock both buttons, animate the active one
+  ['paper1','paper2'].forEach(k => {
+    const b = document.getElementById(`btn-${k}`);
+    if (!b) return;
+    b.disabled = true;
+    b.classList.add('opacity-50','cursor-not-allowed');
+  });
+  const activeBtn = document.getElementById(`btn-${key}`);
+  if (activeBtn) activeBtn.textContent = 'Analysing…';
+
+  // Highlight active tile
+  document.getElementById('tile-paper1').classList.toggle('ring-2',   key==='paper1');
+  document.getElementById('tile-paper1').classList.toggle('ring-v-400',key==='paper1');
+  document.getElementById('tile-paper2').classList.toggle('ring-2',   key==='paper2');
+  document.getElementById('tile-paper2').classList.toggle('ring-v-400',key==='paper2');
+
+  document.getElementById('analysis-results').classList.add('hidden');
+  document.getElementById('analysis-progress').classList.remove('hidden');
+
+  const names = ['Data Collection','Methodology Extraction','Parallel Analysis (×3)','Synthesis & Verdict'];
+  document.getElementById('stage-list').innerHTML = names.map((n,i) => `
+    <div id="s${i}" class="flex items-center gap-3 p-3.5 rounded-lg border border-gray-100 transition-all duration-400">
+      <div id="si${i}" class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 transition-all">
+        <span class="text-gray-400 text-xs font-bold">${i+1}</span>
+      </div>
+      <div class="flex-1">
+        <div class="text-sm font-semibold text-gray-700">${n}</div>
+        <div id="ss${i}" class="text-xs text-gray-400 mt-0.5">Waiting…</div>
+      </div>
+    </div>`).join('');
+
+  const terminal = document.getElementById('terminal-output');
+  terminal.innerHTML = '';
+  let logIdx = 0;
+  const dur = [3500, 2500, 5500, 3000];
+  const logs = data.stageCounts;
+  let si = 0;
+
+  function runStage() {
+    if (si >= 4) { finalise(); return; }
+    document.getElementById(`s${si}`).classList.add('s-active');
+    document.getElementById(`si${si}`).innerHTML =
+      '<div style="width:14px;height:14px;border:2px solid #7c3aed;border-top-color:transparent;border-radius:50%;animation:spin .9s linear infinite"></div>';
+    const ss = document.getElementById(`ss${si}`);
+    ss.textContent = 'Running…'; ss.classList.add('text-v-500'); ss.classList.remove('text-gray-400');
+
+    const perLog = dur[si] / (logs[si] + 1);
+    let added = 0;
+    const lt = setInterval(() => {
+      if (logIdx < data.stageLog.length) {
+        const el = document.createElement('div');
+        el.textContent = data.stageLog[logIdx++];
+        el.style.cssText = 'opacity:0;animation:fadeup .3s ease forwards';
+        terminal.appendChild(el);
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+      if (++added >= logs[si]) clearInterval(lt);
+    }, perLog);
+
+    setTimeout(() => {
+      clearInterval(lt);
+      document.getElementById(`s${si}`).classList.remove('s-active');
+      document.getElementById(`s${si}`).classList.add('s-done');
+      document.getElementById(`si${si}`).innerHTML =
+        '<svg style="width:14px;height:14px;color:#10b981" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+      document.getElementById(`si${si}`).classList.add('bg-emerald-50');
+      ss.textContent = 'Complete ✓'; ss.classList.remove('text-v-500'); ss.classList.add('text-emerald-600');
+      si++;
+      runStage();
+    }, dur[si]);
+  }
+  runStage();
+}
+
+function finalise() {
+  const data = DEMOS[activeDemoKey];
+
+  // Update verdict summary text
+  document.getElementById('verdict-summary').textContent = data.verdictSummary;
+
+  document.getElementById('scorecard').innerHTML = data.scores.map(s => `
+    <div>
+      <div class="flex justify-between mb-1.5">
+        <span class="text-xs font-medium text-gray-700">${s.label}</span>
+        <span class="text-xs font-bold text-gray-900">${s.score}/5</span>
+      </div>
+      <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-full ${s.color} rounded-full score-bar" style="width:0" data-w="${s.score*20}%"></div>
+      </div>
+    </div>`).join('');
+
+  const fc = { ok:'text-emerald-700 bg-emerald-50', fail:'text-red-700 bg-red-50', warn:'text-amber-700 bg-amber-50' };
+  document.getElementById('consensus-findings').innerHTML = data.findings.map(f => `
+    <div class="flex items-start gap-3">
+      <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold ${fc[f.type]}">${f.icon}</span>
+      <p class="text-sm text-gray-600 leading-relaxed">${f.text}</p>
+    </div>`).join('');
+
+  document.getElementById('failure-modes').innerHTML = data.failures.map(f => `
+    <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+      <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5 ${f.sev==='high'?'bg-red-100 text-red-700':'bg-amber-100 text-amber-700'}">${f.sev}</span>
+      <div>
+        <div class="text-sm font-semibold text-gray-800">${f.cat}</div>
+        <div class="text-xs text-gray-500 mt-0.5">${f.issue}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('analysis-results').classList.remove('hidden');
+  setTimeout(() => {
+    document.querySelectorAll('.score-bar').forEach(b => { b.style.width = b.dataset.w; });
+    document.getElementById('analysis-results').scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 80);
+
+  const h = JSON.parse(localStorage.getItem('op-h') || '[]');
+  h.unshift({ id:Date.now(), title:data.paper.title, doi:data.paper.doi, verdict:'PARTIALLY REPRODUCIBLE', date:new Date().toLocaleDateString() });
+  localStorage.setItem('op-h', JSON.stringify(h.slice(0,30)));
+
+  // Re-enable both buttons
+  ['paper1','paper2'].forEach(k => {
+    const b = document.getElementById(`btn-${k}`);
+    if (!b) return;
+    b.disabled = false;
+    b.classList.remove('opacity-50','cursor-not-allowed');
+    b.textContent = 'Run Analysis';
+  });
+  const activeBtn = document.getElementById(`btn-${activeDemoKey}`);
+  if (activeBtn) activeBtn.textContent = 'Re-run';
+  running = false;
+}
+
+// ── HISTORY ──
+function showHistory() {
+  const h = JSON.parse(localStorage.getItem('op-h') || '[]');
+  const vc = {
+    'FULLY REPRODUCIBLE':'bg-emerald-100 text-emerald-700',
+    'PARTIALLY REPRODUCIBLE':'bg-amber-100 text-amber-700',
+    'NOT REPRODUCIBLE':'bg-red-100 text-red-700'
+  };
+  document.getElementById('history-list').innerHTML = h.length === 0
+    ? '<p class="text-gray-400 text-sm text-center py-8">No analyses yet.</p>'
+    : h.map(x => `
+        <div class="border border-gray-100 rounded-lg p-4 mb-3">
+          <div class="flex items-start justify-between gap-3 mb-1.5">
+            <p class="text-sm font-semibold text-gray-900 leading-snug">${x.title}</p>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${vc[x.verdict]||'bg-gray-100 text-gray-600'}">${x.verdict.split(' ')[0]}</span>
+          </div>
+          <p class="text-xs text-gray-400">${x.doi} · ${x.date}</p>
+        </div>`).join('');
+  document.getElementById('history-modal').classList.remove('hidden');
+}
+
+// ── SMOOTH SCROLL ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior:'smooth' });
+  });
+});
+</script>
+</body>
+</html>

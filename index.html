@@ -109,6 +109,7 @@
       <a href="#compare"      class="hover:text-v-600 transition-colors">Why It Works</a>
       <a href="#how-it-works" class="hover:text-v-600 transition-colors">Pipeline</a>
       <a href="#demo"         class="hover:text-v-600 transition-colors">Live Demo</a>
+      <a href="#synthesis"    class="hover:text-v-600 transition-colors">Synthesis</a>
       <button onclick="showHistory()" class="hover:text-v-600 transition-colors">History</button>
     </div>
 
@@ -573,6 +574,126 @@
 </section>
 
 
+<!-- ══════════════ CROSS-PAPER SYNTHESIS ══════════════ -->
+<section id="synthesis" class="py-24 bg-gray-50 px-6">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-12">
+      <span class="text-v-600 font-semibold text-xs tracking-widest uppercase">Multi-Paper Analysis</span>
+      <h2 class="text-4xl font-black text-gray-900 mt-2 tracking-tight">Cross-Paper Synthesis</h2>
+      <p class="text-gray-500 mt-3 text-sm max-w-lg mx-auto">After auditing multiple papers, OpenParasite cross-examines findings — identifying convergences, contradictions, shared gaps, and follow-up recommendations across the literature.</p>
+    </div>
+
+    <!-- Paper pair tiles -->
+    <div class="mb-6 space-y-2">
+      <div class="bg-white border-2 border-v-200 rounded-xl p-4 flex items-center gap-4">
+        <div class="w-8 h-8 bg-v-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <span class="text-v-700 text-xs font-black">P1</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-v-600">Immunology · eLife 2019</span>
+          <p class="text-sm font-semibold text-gray-900 leading-snug truncate">Neutrophils promote CXCR3-dependent itch in the development of atopic dermatitis</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">PARTIAL · 3/5</span>
+      </div>
+      <div class="flex items-center gap-3 px-2">
+        <div class="h-px flex-1 bg-v-100"></div>
+        <div class="w-7 h-7 bg-v-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+          </svg>
+        </div>
+        <div class="h-px flex-1 bg-v-100"></div>
+      </div>
+      <div class="bg-white border-2 border-v-200 rounded-xl p-4 flex items-center gap-4">
+        <div class="w-8 h-8 bg-v-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <span class="text-v-700 text-xs font-black">P2</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-v-600">Neuroscience · eLife 2021</span>
+          <p class="text-sm font-semibold text-gray-900 leading-snug truncate">Single-nucleus transcriptomic analysis of human dorsal root ganglion neurons</p>
+        </div>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">PARTIAL · 2.4/5</span>
+      </div>
+    </div>
+
+    <!-- Run button -->
+    <div class="text-center mb-8">
+      <button onclick="runSynthesis()" id="btn-synthesis"
+        class="ripple-btn bg-v-600 hover:bg-v-700 text-white font-bold px-8 py-3.5 rounded-lg text-sm transition-colors inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        Run Cross-Synthesis
+      </button>
+    </div>
+
+    <!-- Terminal -->
+    <div id="synthesis-progress" class="hidden mb-6">
+      <div class="rounded-xl overflow-hidden border border-gray-200">
+        <div class="flex items-center gap-2 px-4 py-2.5 bg-gray-100 border-b border-gray-200">
+          <span class="w-3 h-3 rounded-full bg-red-400"></span>
+          <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+          <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+          <span class="text-gray-400 text-xs ml-2 font-mono">openparasite — cross-synthesis</span>
+        </div>
+        <div class="terminal p-4 h-40 overflow-y-auto" id="synthesis-terminal"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="synthesis-results" class="hidden space-y-4">
+
+      <!-- Convergences -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden fadeup">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-emerald-50">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+          <h3 class="font-bold text-gray-900 text-sm">Converging Findings</h3>
+          <span class="ml-auto text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">3 identified</span>
+        </div>
+        <div class="divide-y divide-gray-100" id="syn-convergences"></div>
+      </div>
+
+      <!-- Divergences -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden fadeup">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-red-50">
+          <span class="w-2 h-2 rounded-full bg-red-400 flex-shrink-0"></span>
+          <h3 class="font-bold text-gray-900 text-sm">Diverging Claims</h3>
+          <span class="ml-auto text-xs font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">2 identified</span>
+        </div>
+        <div class="divide-y divide-gray-100" id="syn-divergences"></div>
+      </div>
+
+      <!-- Gaps -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden fadeup">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-blue-50">
+          <span class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+          <h3 class="font-bold text-gray-900 text-sm">Complementary Gaps</h3>
+          <span class="ml-auto text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">4 identified</span>
+        </div>
+        <div class="divide-y divide-gray-100" id="syn-gaps"></div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden fadeup">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100 bg-v-50">
+          <span class="w-2 h-2 rounded-full bg-v-500 flex-shrink-0"></span>
+          <h3 class="font-bold text-gray-900 text-sm">Follow-up Recommendations</h3>
+          <span class="ml-auto text-xs font-semibold text-v-700 bg-v-100 px-2 py-0.5 rounded-full">8 recommendations</span>
+        </div>
+        <div class="divide-y divide-gray-100" id="syn-recommendations"></div>
+      </div>
+
+      <!-- Limitations -->
+      <div class="bg-gray-50 rounded-xl border border-gray-200 p-6 fadeup">
+        <h3 class="font-bold text-gray-900 text-sm mb-3">Honest Limitations</h3>
+        <p class="text-gray-500 text-xs leading-relaxed">Both papers underlying this synthesis are <strong class="text-gray-700">PARTIALLY REPRODUCIBLE</strong>. A synthesis built on two partially reproducible papers inherits all of their uncertainties. The integrative picture — a CXCL10/CXCR3 signal from inflamed keratinocytes reaching a specific DRG subtype — is scientifically plausible but is a <strong class="text-gray-700">well-motivated hypothesis</strong>, not a synthesis of established facts. The audit evaluates internal consistency and documentability; it says nothing about external validity.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
 <!-- ══════════════ ABOUT ══════════════ -->
 <section id="about" class="py-24 bg-v-50 px-6">
   <div class="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
@@ -1029,6 +1150,201 @@ function showHistory() {
           <p class="text-xs text-gray-400">${x.doi} · ${x.date}</p>
         </div>`).join('');
   document.getElementById('history-modal').classList.remove('hidden');
+}
+
+// ── SYNTHESIS DATA ──
+const SYNTHESIS_DATA = {
+  terminalLog: [
+    "$ openparasite synthesise --paper1 10.7554/eLife.48448 --paper2 10.7554/eLife.71752",
+    "→ Loading audit: Walsh et al. (eLife 2019) — 15 claims across 4 tiers",
+    "→ Loading audit: Tavares-Ferreira et al. (eLife 2021) — 10 claims across 4 tiers",
+    "→ Building claim stability matrix (25 claims × 5 dimensions)...",
+    "→ Running semantic similarity across claim sets...",
+    "→ Convergence 1: CXCL10/CXCR3 pharmacological specificity ↔ DRG subtype heterogeneity",
+    "→ Convergence 2: Il31ra upregulation (P1-keratinocyte) ↔ OSMR in 25.8% of DRG neurons (P2)",
+    "→ Convergence 3: Pseudoreplication — image-level IHC (P1) + same-donor snRNA-seq (P2)",
+    "→ Divergence 1: Mouse model assumptions vs. human DRG subtype landscape",
+    "→ Divergence 2: IL-31 pathway specificity vs. broad OSMR distribution",
+    "→ Mapping complementary data gaps across both papers...",
+    "→ Gap 1 (HIGH): CXCR3 in human DRG — answerable from GSE168243 today",
+    "→ Gap 2 (HIGH): IL31RA + OSMR co-expression — answerable from GSE168243 today",
+    "→ Gap 3 (MEDIUM): Mouse DRG CXCR3 by subtype — requires external atlas",
+    "→ Gap 4 (LOW): Longitudinal DRG profiling during AD — new experiments needed",
+    "→ Generating 8 follow-up recommendations with feasibility ratings...",
+    "→ Cross-synthesis complete ✓"
+  ],
+  convergences: [
+    {
+      title: "Molecular specificity in itch, not generic inflammation",
+      confidence: "moderate",
+      confCls: "bg-amber-100 text-amber-700",
+      body: "Paper 1 establishes CXCL10/CXCR3 as the specific itch-driving axis in mouse AD (Tier 1 — chloroquine null result is the key control). Paper 2 demonstrates DRG neurons form approximately a dozen molecularly distinct classes (Tier 2). Together: itch is a circuit-level phenomenon localized to discrete populations, not an emergent property of generalized inflammation.",
+      note: "Conceptually coherent but cannot yet be grounded numerically — the direct link 'CXCR3-expressing neurons = human DRG subtype X' is unestablished."
+    },
+    {
+      title: "OSMR/IL-31 axis as candidate skin-to-neuron signaling route in AD",
+      confidence: "suggestive",
+      confCls: "bg-blue-100 text-blue-700",
+      body: "Paper 1 (NHEK RNA-seq, Tier 1): Il31ra upregulated in neutrophil-conditioned keratinocytes. Paper 2 (Tier 2): OSMR expressed in 25.8% of human DRG neurons. Two independent experimental systems implicate the IL-31/OSMR axis as a plausible conduit from inflamed epithelium to sensory neurons.",
+      note: "Neither paper tested IL-31 signaling functionally at the neuron level. This is a suggestive convergence, not a mechanistic finding."
+    },
+    {
+      title: "Shared methodological failure: pseudoreplication",
+      confidence: "confirmed",
+      confCls: "bg-emerald-100 text-emerald-700",
+      body: "Paper 1: IHC analysis conducted at image level with n=2 biological animals per group — no valid statistical inference possible at the animal level. Paper 2: preparations 3 and 5 are from the same donor, representing 46.3% of all 1,837 cells, without acknowledgment or correction.",
+      note: "This is a convergence in study design weakness, not a scientific finding. Both papers' statistics fail to fully account for biological replication."
+    }
+  ],
+  divergences: [
+    {
+      title: "Mouse vs. human DRG neuron type correspondence",
+      body: "Paper 1 implicitly treats mouse DRG as a valid model for human itch circuitry. Paper 2's cross-species comparison (Tier 4) suggests the mouse-to-human translation may be non-trivial: H9 shows weak similarity to all mouse classes; no human class aligns with mouse cLTMRs.",
+      resolution: "Complementary, not contradictory. Pharmacological targets like CXCR3 are conserved proteins; Paper 1's pathways likely operate in both species even if the subtype landscape differs. The precise cell population responsible for CXCR3-dependent itch in mice may not map cleanly to a human counterpart."
+    },
+    {
+      title: "Breadth of IL-31 signaling across DRG subtypes",
+      body: "Paper 1 implies (via TSLPRKO behavioral phenotype) that TSLP/IL-31 signals act on sensory neurons in a pathway-specific way. Paper 2's OSMR data (25.8% of all neurons) suggests the receptor is broadly distributed — predicting broad rather than subtype-specific sensitization.",
+      resolution: "Not a strong contradiction — IL31RA and OSMR have different expression patterns, and co-expression is what matters. Recommendation 2 (IL31RA/OSMR co-expression query on GSE168243) would resolve this directly."
+    }
+  ],
+  gaps: [
+    {
+      priority: 1, feasibility: "HIGH", feasCls: "bg-emerald-100 text-emerald-700",
+      title: "Which human DRG subtype expresses CXCR3?",
+      body: "Paper 1 establishes CXCL10/CXCR3 as the primary itch axis in mouse. Paper 2 has expression data for 58,188 genes in 1,837 human neuronal nuclei — including CXCR3. Neither paper asks which human neuron type receives this signal. GSE168243 could answer this today."
+    },
+    {
+      priority: 2, feasibility: "HIGH", feasCls: "bg-emerald-100 text-emerald-700",
+      title: "IL31RA + OSMR co-expression in human DRG subtypes",
+      body: "Paper 1: Il31ra upregulated in keratinocytes. Paper 2: OSMR in 25.8% of human DRG neurons. Neither establishes whether both receptors are co-expressed in the same neuronal subtype. Joint query of GSE168243 could identify the specific DRG subtype competent for IL-31 signaling."
+    },
+    {
+      priority: 3, feasibility: "MEDIUM", feasCls: "bg-amber-100 text-amber-700",
+      title: "Mouse DRG CXCR3 expression by subtype",
+      body: "Paper 1's pharmacology is entirely in mouse but never characterizes which mouse DRG neuron type expresses CXCR3. Published mouse DRG single-cell datasets exist in GEO. Querying CXCR3 there would link Paper 1's behavioral pharmacology to a specific cell-type identity in the same species."
+    },
+    {
+      priority: 4, feasibility: "LOW", feasCls: "bg-red-100 text-red-700",
+      title: "Longitudinal neuronal changes during AD development",
+      body: "Paper 1 has a time-course (Days 2, 5, 8, 12) for behavioral/immune data but no single-cell neuronal profiling. Paper 2 has a detailed DRG snapshot but no disease condition or time-course. A time-resolved transcriptomics study during AD would bridge both gaps simultaneously."
+    }
+  ],
+  recommendations: [
+    { id:1, feasibility:"HIGH",   feasCls:"bg-emerald-100 text-emerald-700", question:"Does CXCR3 expression in human DRG neurons localize to a specific transcriptomic subclass, or is it broadly distributed?", risk:"CXCR3 is a low-abundance transcript in snRNA-seq. May be below detection in the majority of cells, making subtype-level conclusions impossible." },
+    { id:2, feasibility:"HIGH",   feasCls:"bg-emerald-100 text-emerald-700", question:"Are IL31RA and OSMR co-expressed in the same human DRG neuronal subtype, and if so, which?", risk:"IL31RA may be very sparsely detected in snRNA-seq. Absence does not imply absence of protein co-expression." },
+    { id:3, feasibility:"HIGH",   feasCls:"bg-emerald-100 text-emerald-700", question:"Does batch correction for 10x v2 vs. v3 chemistry alter the cluster identities or proportions reported in Paper 2?", risk:"Harmony may over-correct, removing real biological variation that correlates with chemistry version." },
+    { id:4, feasibility:"HIGH",   feasCls:"bg-emerald-100 text-emerald-700", question:"What is the corrected biological interpretation of IL8 and CXCL2 upregulation, given log\u2081\u2080 values were reported as log\u2082?", risk:"Corrected values (~3.6\u00d7 and ~3.1\u00d7 upregulation) are far less dramatic than the ~73\u00d7 and ~32\u00d7 implied by the paper." },
+    { id:5, feasibility:"MEDIUM", feasCls:"bg-amber-100 text-amber-700",   question:"Do the three CXCL10 ELISA contrasts survive multiple-comparison correction?", risk:"After Bonferroni, the mechanistic CXCL10 story may weaken substantially, leaving the behavioral pharmacology poorly explained at the molecular level." },
+    { id:6, feasibility:"MEDIUM", feasCls:"bg-amber-100 text-amber-700",   question:"Which mouse DRG neuron subtypes express CXCR3, and do they correspond to the human subtypes from Recommendation 1?", risk:"False-negative rate for low-abundance transcripts in snRNA-seq is high. 'Not detected' does not rule out protein expression." },
+    { id:7, feasibility:"MEDIUM", feasCls:"bg-amber-100 text-amber-700",   question:"Do Paper 1's behavioral claims survive re-analysis with the complete AMG487 dataset including ~20 missing animals?", risk:"Authors may be unable to locate raw behavioral data from a 2019 paper." },
+    { id:8, feasibility:"LOW",    feasCls:"bg-red-100 text-red-700",       question:"Do anti-Gr1 depletion (79% scratch reduction) and TSLPRKO (44% scratch reduction) replicate in independent experiments with individual-level data fully documented?", risk:"New animal experiments required. If replication fails, the mechanistic case for neutrophil-driven CXCL10 signaling weakens substantially." }
+  ]
+};
+
+let synthesisRunning = false;
+
+function runSynthesis() {
+  if (synthesisRunning) return;
+  synthesisRunning = true;
+
+  const btn = document.getElementById('btn-synthesis');
+  btn.disabled = true;
+  btn.classList.add('opacity-60','cursor-not-allowed');
+  btn.innerHTML = '<div style="width:14px;height:14px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin .9s linear infinite;flex-shrink:0"></div> Synthesising\u2026';
+
+  document.getElementById('synthesis-results').classList.add('hidden');
+  document.getElementById('synthesis-progress').classList.remove('hidden');
+  document.getElementById('synthesis-progress').scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  const terminal = document.getElementById('synthesis-terminal');
+  terminal.innerHTML = '';
+  const logs = SYNTHESIS_DATA.terminalLog;
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i >= logs.length) { clearInterval(iv); setTimeout(finaliseSynthesis, 500); return; }
+    const el = document.createElement('div');
+    el.textContent = logs[i++];
+    el.style.cssText = 'opacity:0;animation:fadeup .3s ease forwards';
+    terminal.appendChild(el);
+    terminal.scrollTop = terminal.scrollHeight;
+  }, 320);
+}
+
+function finaliseSynthesis() {
+  const d = SYNTHESIS_DATA;
+
+  document.getElementById('syn-convergences').innerHTML = d.convergences.map(c => `
+    <div class="p-5">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg class="w-2.5 h-2.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+        </span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-0.5">
+            <p class="text-sm font-semibold text-gray-900">${c.title}</p>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${c.confCls}">${c.confidence}</span>
+          </div>
+          <p class="text-xs text-gray-600 leading-relaxed mb-1.5">${c.body}</p>
+          <p class="text-xs text-gray-400 italic">${c.note}</p>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('syn-divergences').innerHTML = d.divergences.map(div => `
+    <div class="p-5">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg class="w-2.5 h-2.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 mb-1.5">${div.title}</p>
+          <p class="text-xs text-gray-600 leading-relaxed mb-2">${div.body}</p>
+          <div class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+            <p class="text-xs text-blue-700"><span class="font-semibold">Resolution path: </span>${div.resolution}</p>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('syn-gaps').innerHTML = d.gaps.map(g => `
+    <div class="p-5 flex items-start gap-4">
+      <div class="w-7 h-7 rounded-full bg-v-100 border border-v-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <span class="text-v-700 text-[11px] font-black">${g.priority}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap mb-1.5">
+          <p class="text-sm font-semibold text-gray-900">${g.title}</p>
+          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${g.feasCls}">${g.feasibility}</span>
+        </div>
+        <p class="text-xs text-gray-500 leading-relaxed">${g.body}</p>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('syn-recommendations').innerHTML = d.recommendations.map(r => `
+    <div class="p-5 flex items-start gap-4">
+      <div class="w-7 h-7 rounded-lg bg-v-50 border border-v-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <span class="text-v-700 text-xs font-black">${r.id}</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-start gap-2 flex-wrap mb-1.5">
+          <p class="text-sm font-semibold text-gray-900 flex-1">${r.question}</p>
+          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full flex-shrink-0 ${r.feasCls}">${r.feasibility}</span>
+        </div>
+        <p class="text-xs text-gray-500 leading-relaxed"><span class="font-semibold text-gray-600">Risk: </span>${r.risk}</p>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('synthesis-results').classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('synthesis-results').scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 80);
+
+  const btn = document.getElementById('btn-synthesis');
+  btn.disabled = false;
+  btn.classList.remove('opacity-60','cursor-not-allowed');
+  btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg> Re-run Synthesis';
+  synthesisRunning = false;
 }
 
 // ── SMOOTH SCROLL ──
